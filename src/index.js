@@ -10,7 +10,7 @@ class IntRelation {
 
   typeToRoot(v) {
     const vv = parseInt(v);
-    return new Array(vv).join(0).split('')
+    return new Array(vv + 1).join(0).split('');
   }
 }
 
@@ -18,8 +18,9 @@ let relation = new IntRelation();
 
 class VersionedType {
 
-  constructor() {
+  constructor(id) {
     this.nodes = {};
+    this.id = id;
   }
 
   get(v) {
@@ -34,20 +35,39 @@ class VersionedType {
   }
 
   add(v, t) {
-    const path = relation.pathToRoot(v);
+    if (!t) {
+      console.error('');
+      console.error('Cannot verify type correctness without annotations.');
+      console.error(`Name    : ${this.id}`);
+      console.error(`Version : ${v}`);
+      console.error('');
+      return;
+    }
+
+    const path = relation.pathToRoot(v).reverse();
     const type = relation.typeToRoot(v);
     this.nodes[v] = t;
 
+    console.log(path);
+    console.log(type);
+
+    for (let x of path) {
+      console.log(x);
+      console.log(type);
+      console.log(type.pop());
+    }
+
+    return this;
+
     //Verificações
-    console.log(relation.pathToRoot(v));
+    //console.log(relation.pathToRoot(v));
   }
 }
 
 export default function ({ types: t }) {
   let ids = {};
 
-  let relation = new IntRelation();
-  console.log(relation.typeToRoot(22));
+  // let vt = new VersionedType(IntRelation);
 
   return {
     visitor: {
@@ -59,17 +79,33 @@ export default function ({ types: t }) {
           params[0].left.name === 'version') {
           let version = params[0].right.value;
           let body = path.node.body;
+          let type;
           if (body.type === 'BlockStatement') {
             body.body.filter((el) => el.type === 'VariableDeclaration').forEach((element) => {
               element.declarations.forEach((el) => {
+                if (el.init.returnType) {
+                  const tipo = el.init.returnType.typeAnnotation;
+                  type = tipo;
+                  switch (tipo.type) {
+                    case 'GenericTypeAnnotation':
+
+                      //console.log(tipo.id.name);
+                    default:
+                  }
+                }
+
                 const name = el.id.name;
                 path.scope.rename(name, name + '__' + version);
+                if (!(name in ids))
+                  ids[name] = new VersionedType(name);
+                console.log(name,version,type);
+                ids[name].add(version, type);
               });
             });
             body.body.forEach((el) => path.insertBefore(el));
             path.remove();
-          }
-          else if (body.type === 'Identifier') {
+
+          } else if (body.type === 'Identifier') {
             body.name += '__' + version;
             path.replaceWith(body);
           }

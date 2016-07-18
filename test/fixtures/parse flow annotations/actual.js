@@ -29,6 +29,15 @@ type Name = {
   };
 };
 
+(version = 2) => {
+  let users = (req, res): number => {
+    return {
+      name: 'João Campinhos',
+      age: 24,
+    };
+  };
+};
+
 (version = 3) => {
   let users = (req, res): User => {
     return {
