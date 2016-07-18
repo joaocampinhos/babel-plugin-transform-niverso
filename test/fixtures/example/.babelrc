@@ -1,5 +1,7 @@
 {
   "plugins": [
-    ["../../../src"]
+    ["../../../src"],
+    "syntax-flow",
+    "transform-flow-strip-types"
   ]
 }

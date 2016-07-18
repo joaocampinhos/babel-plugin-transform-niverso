@@ -1,7 +1,40 @@
-var x__1 = 1;
-var y__1 = x__1;
-var z__1 = x__1 + y__1;
+const niverso = require('./niverso');
+const express = require('express');
+const app = express();
 
-var x__2 = 2;
+app.get('/api', (req, res) => {
+  res.send('api');
+});
 
-var a__3 = x__3 + x__2 + x__1;
+/* ------------ *\
+ *    Routes    *
+\* ------------ */
+
+let users__1 = (req, res) => {
+  res.json({
+    name: 'João Campinhos',
+    age: 24
+  });
+};
+
+let users__3 = (req, res) => {
+  res.json({
+    name: {
+      first: 'João',
+      last: 'Campinhos'
+    },
+    age: 24
+  });
+};
+
+
+// Qual a relação a utilizar
+niverso.use(require('./IntRelation'));
+
+niverso.get(1, '/api/users', users__1);
+niverso.get(3, '/api/users', users__3);
+
+// Criar routes do express com base nas routes do niverso
+niverso.start(app);
+
+app.listen(3000, () => console.log('Express server listening on port 3000'));
