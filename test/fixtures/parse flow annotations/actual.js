@@ -30,7 +30,7 @@ type Name = {
 };
 
 (version = 2) => {
-  let users = (req, res): number => {
+  let users = (req, res): User => {
     return {
       name: 'João Campinhos',
       age: 24,

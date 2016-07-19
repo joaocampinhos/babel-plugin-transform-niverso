@@ -13,6 +13,8 @@ class IntRelation {
     return new Array(vv + 1).join(0).split('');
   }
 }
+IntRelation.NOTHING = 0;
+IntRelation.EVERYTHING = 0;
 
 let relation = new IntRelation();
 
@@ -48,29 +50,57 @@ class VersionedType {
     const type = relation.typeToRoot(v);
     this.nodes[v] = t;
 
-    console.log(path);
-    console.log(type);
+    let big = relation.NOTHING;
 
     for (let x of path) {
-      console.log(x);
-      console.log(type);
-      console.log(type.pop());
+      const tmp = type.pop();
+      if (!tmp) break;
+      if (tmp > big) big = tmp;
+      switch (big) {
+        case relation.NOTHING:
+          if (this.nodes[x].type !== t.type) {
+            throw new Error(`
+            Incompatible types between version ${v} and ${x}
+            Name: ${this.id}
+            type ${v}: ${t.type}
+            type ${x}: ${this.nodes[x].type}`);
+          }
+
+          break;
+        case relation.EVERYTHING:
+        default:
+      }
     }
 
     return this;
+  }
 
-    //Verificações
-    //console.log(relation.pathToRoot(v));
+  _compareTypes(t1, t2) {
+    if (t1.type !== t2.type) return false;
+
+    // ...
   }
 }
 
 export default function ({ types: t }) {
   let ids = {};
-
-  // let vt = new VersionedType(IntRelation);
-
   return {
     visitor: {
+      CallExpression(path) {
+        const call = path.node.callee;
+        if (call.object &&
+          call.object.name === 'niverso' &&
+          call.property.name !== 'use' &&
+          call.property.name !== 'start') {
+          console.log('---------------------------');
+          console.log('TODO: Verificar');
+          console.log(path.node.arguments[0].value);
+          console.log(path.node.arguments[1].value);
+          console.log(path.node.arguments[2].body.name);
+          console.log('---------------------------');
+        }
+      },
+
       ArrowFunctionExpression(path) {
         const params = path.node.params;
         if (params.length === 1 &&
@@ -98,7 +128,7 @@ export default function ({ types: t }) {
                 path.scope.rename(name, name + '__' + version);
                 if (!(name in ids))
                   ids[name] = new VersionedType(name);
-                console.log(name,version,type);
+                //console.log(name,version,type);
                 ids[name].add(version, type);
               });
             });
