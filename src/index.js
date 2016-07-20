@@ -14,7 +14,8 @@ class IntRelation {
   }
 }
 IntRelation.NOTHING = 0;
-IntRelation.EVERYTHING = 0;
+IntRelation.SUBTYPING = 20;
+IntRelation.EVERYTHING = 10;
 
 let relation = new IntRelation();
 
@@ -38,11 +39,11 @@ class VersionedType {
 
   add(v, t) {
     if (!t) {
-      console.error('');
+      //console.error('');
       console.error('Cannot verify type correctness without annotations.');
-      console.error(`Name    : ${this.id}`);
-      console.error(`Version : ${v}`);
-      console.error('');
+      //console.error(`Name    : ${this.id}`);
+      //console.error(`Version : ${v}`);
+      //console.error('');
       return;
     }
 
@@ -52,6 +53,7 @@ class VersionedType {
 
     let big = relation.NOTHING;
 
+    /*
     for (let x of path) {
       const tmp = type.pop();
       if (!tmp) break;
@@ -60,10 +62,10 @@ class VersionedType {
         case relation.NOTHING:
           if (this.nodes[x].type !== t.type) {
             throw new Error(`
-            Incompatible types between version ${v} and ${x}
-            Name: ${this.id}
-            type ${v}: ${t.type}
-            type ${x}: ${this.nodes[x].type}`);
+              Incompatible types between version ${v} and ${x}
+              Name: ${this.id}
+              type ${v}: ${t.type}
+              type ${x}: ${this.nodes[x].type}`);
           }
 
           break;
@@ -71,6 +73,7 @@ class VersionedType {
         default:
       }
     }
+    */
 
     return this;
   }
@@ -84,6 +87,7 @@ class VersionedType {
 
 export default function ({ types: t }) {
   let ids = {};
+  let routes = {};
   return {
     visitor: {
       CallExpression(path) {
@@ -92,12 +96,11 @@ export default function ({ types: t }) {
           call.object.name === 'niverso' &&
           call.property.name !== 'use' &&
           call.property.name !== 'start') {
-          console.log('---------------------------');
-          console.log('TODO: Verificar');
-          console.log(path.node.arguments[0].value);
-          console.log(path.node.arguments[1].value);
-          console.log(path.node.arguments[2].body.name);
-          console.log('---------------------------');
+          let version = path.node.arguments[0].value;
+          let route = path.node.arguments[1].value;
+          let id = path.node.arguments[2].body.name;
+          let type = ids[id].get(version);
+          console.log(ids);
         }
       },
 
@@ -111,6 +114,15 @@ export default function ({ types: t }) {
           let body = path.node.body;
           let type;
           if (body.type === 'BlockStatement') {
+            body.body.filter((el) => el.type === 'FunctionDeclaration').forEach((element) => {
+              const type = element.returnType;
+              const name = element.id.name;
+              path.scope.rename(name, name + '__' + version);
+              if (!(name in ids))
+                ids[name] = new VersionedType(name);
+              ids[name].add(version, type);
+            });
+
             body.body.filter((el) => el.type === 'VariableDeclaration').forEach((element) => {
               element.declarations.forEach((el) => {
                 if (el.init.returnType) {

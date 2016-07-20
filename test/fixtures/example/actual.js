@@ -11,7 +11,7 @@ app.get('/api', (req, res) => {
 \* ------------ */
 
 (version = 1) => {
-  let users = (req, res) => {
+  function users(req, res):string {
     res.json({
       name: 'João Campinhos',
       age: 24,
@@ -20,7 +20,7 @@ app.get('/api', (req, res) => {
 };
 
 (version = 3) => {
-  let users = (req, res) => {
+  function users(req, res):string {
     res.json({
       name: {
         first: 'João',
