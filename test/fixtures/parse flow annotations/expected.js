@@ -34,7 +34,7 @@ let users__2 = (req, res): User => {
   };
 };
 
-let users__3 = (req, res): User => {
+let users__3 = (req, res): User1 => {
   return {
     name: {
       first: 'João',

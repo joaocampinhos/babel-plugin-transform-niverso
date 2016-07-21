@@ -39,7 +39,7 @@ type Name = {
 };
 
 (version = 3) => {
-  let users = (req, res): User => {
+  let users = (req, res): User1 => {
     return {
       name: {
         first: 'João',

@@ -1,3 +1,5 @@
+var _ = require('lodash');
+
 class IntRelation {
   isVersion(v) {
     return true;
@@ -10,14 +12,14 @@ class IntRelation {
 
   typeToRoot(v) {
     const vv = parseInt(v);
-    return new Array(vv + 1).join(0).split('');
+    return new Array(vv + 1).join('0').split('');
   }
 }
-IntRelation.NOTHING = 0;
-IntRelation.SUBTYPING = 20;
-IntRelation.EVERYTHING = 10;
 
 let relation = new IntRelation();
+relation.NOTHING = 0;
+relation.SUBTYPING = 20;
+relation.EVERYTHING = 10;
 
 class VersionedType {
 
@@ -39,50 +41,64 @@ class VersionedType {
 
   add(v, t) {
     if (!t) {
-      //console.error('');
       console.error('Cannot verify type correctness without annotations.');
-      //console.error(`Name    : ${this.id}`);
-      //console.error(`Version : ${v}`);
-      //console.error('');
       return;
     }
 
     const path = relation.pathToRoot(v).reverse();
     const type = relation.typeToRoot(v);
-    this.nodes[v] = t;
 
     let big = relation.NOTHING;
 
-    /*
     for (let x of path) {
       const tmp = type.pop();
+      if (!this.nodes[x]) continue;
       if (!tmp) break;
       if (tmp > big) big = tmp;
       switch (big) {
         case relation.NOTHING:
-          if (this.nodes[x].type !== t.type) {
+          if (!compareTypes(this.nodes[x],t)) {
             throw new Error(`
               Incompatible types between version ${v} and ${x}
               Name: ${this.id}
-              type ${v}: ${t.type}
-              type ${x}: ${this.nodes[x].type}`);
+              type ${v}: ${JSON.stringify(t)}
+              type ${x}: ${JSON.stringify(this.nodes[x])}`);
           }
 
           break;
+        case relation.SUBTYPING:
+          if (!subTypes(this.nodes[x],t)) {
+
+          }
         case relation.EVERYTHING:
         default:
       }
     }
-    */
 
+    this.nodes[v] = t;
     return this;
   }
 
-  _compareTypes(t1, t2) {
-    if (t1.type !== t2.type) return false;
+}
 
-    // ...
+function compareTypes(t1, t2) {
+  if (t1.type !== t2.type) return false;
+  else return _.isEqual(t1, t2);
+}
+
+function subTypes(t1, t2) {
+  return true;
+}
+
+function removeProp(obj, p) {
+  for(let prop in obj) {
+    if (prop === p)
+      delete obj[prop];
+    else if (typeof obj[prop] === 'object') {
+      removeProp(obj[prop], p);
+    }
   }
+  return obj;
 }
 
 export default function ({ types: t }) {
@@ -100,7 +116,6 @@ export default function ({ types: t }) {
           let route = path.node.arguments[1].value;
           let id = path.node.arguments[2].body.name;
           let type = ids[id].get(version);
-          console.log(ids);
         }
       },
 
@@ -115,7 +130,10 @@ export default function ({ types: t }) {
           let type;
           if (body.type === 'BlockStatement') {
             body.body.filter((el) => el.type === 'FunctionDeclaration').forEach((element) => {
-              const type = element.returnType;
+              type = JSON.parse(JSON.stringify(element.returnType.typeAnnotation));
+              type = removeProp(type,'start');
+              type = removeProp(type,'end');
+              type = removeProp(type,'loc');
               const name = element.id.name;
               path.scope.rename(name, name + '__' + version);
               if (!(name in ids))
@@ -126,7 +144,10 @@ export default function ({ types: t }) {
             body.body.filter((el) => el.type === 'VariableDeclaration').forEach((element) => {
               element.declarations.forEach((el) => {
                 if (el.init.returnType) {
-                  const tipo = el.init.returnType.typeAnnotation;
+                  let tipo = el.init.returnType.typeAnnotation;
+                  tipo = removeProp(tipo,'start');
+                  tipo = removeProp(tipo,'end');
+                  tipo = removeProp(tipo,'loc');
                   type = tipo;
                   switch (tipo.type) {
                     case 'GenericTypeAnnotation':
