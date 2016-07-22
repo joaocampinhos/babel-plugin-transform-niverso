@@ -12,14 +12,14 @@ class IntRelation {
 
   typeToRoot(v) {
     const vv = parseInt(v);
-    return new Array(vv + 1).join('0').split('');
+    return new Array(vv + 1).fill(10);
   }
 }
 
 let relation = new IntRelation();
 relation.NOTHING = 0;
-relation.SUBTYPING = 20;
-relation.EVERYTHING = 10;
+relation.SUBTYPING = 10;
+relation.EVERYTHING = 20;
 
 class VersionedType {
 
@@ -45,6 +45,7 @@ class VersionedType {
       return;
     }
 
+
     const path = relation.pathToRoot(v).reverse();
     const type = relation.typeToRoot(v);
 
@@ -53,22 +54,25 @@ class VersionedType {
     for (let x of path) {
       const tmp = type.pop();
       if (!this.nodes[x]) continue;
-      if (!tmp) break;
+      if (tmp === undefined) break;
       if (tmp > big) big = tmp;
       switch (big) {
         case relation.NOTHING:
-          if (!compareTypes(this.nodes[x],t)) {
+          if (!equalTypes(this.nodes[x],t)) {
             throw new Error(`
               Incompatible types between version ${v} and ${x}
               Name: ${this.id}
               type ${v}: ${JSON.stringify(t)}
               type ${x}: ${JSON.stringify(this.nodes[x])}`);
           }
-
           break;
         case relation.SUBTYPING:
           if (!subTypes(this.nodes[x],t)) {
-
+            throw new Error(`
+              Incompatible types between version ${v} and ${x}
+              Name: ${this.id}
+              type ${v}: ${JSON.stringify(t)}
+              type ${x}: ${JSON.stringify(this.nodes[x])}`);
           }
         case relation.EVERYTHING:
         default:
@@ -81,12 +85,24 @@ class VersionedType {
 
 }
 
-function compareTypes(t1, t2) {
+function equalTypes(t1, t2) {
   if (t1.type !== t2.type) return false;
   else return _.isEqual(t1, t2);
 }
 
 function subTypes(t1, t2) {
+  if (t1.type !== t2.type) return false;
+  else if (t1.type === 'TupleTypeAnnotation') {
+    t1.types.forEach((element, index) => {
+      element.properties.forEach((prop, i) => {
+
+        //naive. podem ter ordem diferente obvs
+        //TODO: trocar isto por uma pesquisa
+        //TODO: verificar opcionais
+        if(!_.isEqual(prop, t2.types[index].properties[i])) return false;
+      });
+    });
+  }
   return true;
 }
 

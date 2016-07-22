@@ -13,24 +13,21 @@ app.get('/api', (req, res) => {
 \* ------------ */
 
 (version = 1) => {
-  function users(req, res): number {
-    return {
+  function users(req, res): [{name: string, age: number}] {
+    return [{
       name: 'João Campinhos',
       age: 24,
-    };
+    }];
   };
 };
 
-
 (version = 3) => {
-  function users(req, res): string {
-    return {
-      name: {
-        first: 'João',
-        last: 'Campinhos',
-      },
+  function users(req, res): [{name: string, age: number, location: string}] {
+    return [{
+      name: 'João Campinhos',
       age: 24,
-    };
+      location: 'Lisbon',
+    }];
   };
 };
 

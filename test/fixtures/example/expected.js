@@ -12,21 +12,19 @@ app.get('/api', (req, res) => {
  *    Routes    *
 \* ------------ */
 
-function users__1(req, res): number {
-  return {
+function users__1(req, res): [{ name: string; age: number; }] {
+  return [{
     name: 'João Campinhos',
     age: 24
-  };
+  }];
 };
 
-function users__3(req, res): string {
-  return {
-    name: {
-      first: 'João',
-      last: 'Campinhos'
-    },
-    age: 24
-  };
+function users__3(req, res): [{ name: string; age: number; location: string; }] {
+  return [{
+    name: 'João Campinhos',
+    age: 24,
+    location: 'Lisbon'
+  }];
 };
 
 
