@@ -13,7 +13,7 @@ app.get('/api', (req, res) => {
 \* ------------ */
 
 (version = 1) => {
-  function users(req, res): [{name: string, age: number}] {
+  function users(req, res): Array<{name: string, age: number}> {
     return [{
       name: 'João Campinhos',
       age: 24,
@@ -22,13 +22,12 @@ app.get('/api', (req, res) => {
 };
 
 (version = 3) => {
-  function users(req, res): [{name: string, age: number, location: string}] {
+  function users(req, res): Array<{name: string, age: number, location: string}> {
     return [{
       name: 'João Campinhos',
       age: 24,
       location: 'Lisbon',
-    }];
-  };
+    }]; };
 };
 
 // Qual a relação a utilizar

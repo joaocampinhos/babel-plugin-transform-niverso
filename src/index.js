@@ -91,19 +91,38 @@ function equalTypes(t1, t2) {
 }
 
 function subTypes(t1, t2) {
+  let result = false;
   if (t1.type !== t2.type) return false;
-  else if (t1.type === 'TupleTypeAnnotation') {
-    t1.types.forEach((element, index) => {
-      element.properties.forEach((prop, i) => {
-
-        //naive. podem ter ordem diferente obvs
-        //TODO: trocar isto por uma pesquisa
-        //TODO: verificar opcionais
-        if(!_.isEqual(prop, t2.types[index].properties[i])) return false;
-      });
+  else if (t1.type === 'ObjectTypeAnnotation') {
+    result = t1.properties.every((prop) => {
+      const p = findByPropName(prop.key.name,t2.properties);
+      if (!p) return false;
+      if (equalTypes(prop,p)) return true;
+      else {
+        if (prop.type === p.type) {
+          if (_.isEqual(prop.value,p.value)) {
+            return prop.optional && !p.optional;
+          } else {
+            if (!(!prop.optional && p.optional))
+              return subTypes(prop.value, p.value);
+            else return false;
+          }
+        }
+      }
+      return false;
     });
   }
-  return true;
+  else if (t1.type === 'GenericTypeAnnotation') {
+    if (t1.id.name === t2.id.name) {
+      //Hack?
+      result = subTypes(t1.typeParameters.params[0], t2.typeParameters.params[0]);
+    }
+  }
+  return result;
+}
+
+function findByPropName(name,props) {
+  return props.find((p) => p.key.name === name);
 }
 
 function removeProp(obj, p) {

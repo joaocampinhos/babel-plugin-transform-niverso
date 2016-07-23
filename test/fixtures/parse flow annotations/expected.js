@@ -5,41 +5,35 @@ function smth(x: number): number {
   return x;
 }
 
-type User = {
-  name: string;
-  age: number;
-};
-
-type User1 = {
-  name: Name;
-  age: number;
-};
-
-type Name = {
-  first: string;
-  last: string;
-};
-
-let users__1 = (req, res): User => {
-  return {
-    name: 'João Campinhos',
-    age: 24
+let user__1 = (req, res): {
+  name: {
+    first: string;
+    last?: string;
   };
-};
-
-let users__2 = (req, res): User => {
-  return {
-    name: 'João Campinhos',
-    age: 24
-  };
-};
-
-let users__3 = (req, res): User1 => {
+  location?: string;
+} => {
   return {
     name: {
-      first: 'João',
-      last: 'Campinhos'
+      first: 'Foo'
     },
-    age: 24
+    location: 'lisboa'
+  };
+};
+
+let user__2 = (req, res): {
+  age: number;
+  location: string;
+  name: {
+    first: string;
+    last: string;
+  };
+} => {
+  return {
+    name: {
+      first: 'Foo',
+      last: 'Bar'
+    },
+    age: 24,
+    location: 'lisboa'
   };
 };
