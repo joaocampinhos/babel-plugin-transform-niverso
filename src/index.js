@@ -1,25 +1,6 @@
 var _ = require('lodash');
 
-class IntRelation {
-  isVersion(v) {
-    return true;
-  }
-
-  pathToRoot(v) {
-    const vv = parseInt(v);
-    return [...Array(vv + 1).keys()];
-  }
-
-  typeToRoot(v) {
-    const vv = parseInt(v);
-    return new Array(vv + 1).fill(10);
-  }
-}
-
-let relation = new IntRelation();
-relation.NOTHING = 0;
-relation.SUBTYPING = 10;
-relation.EVERYTHING = 20;
+let relation;
 
 class VersionedType {
 
@@ -45,17 +26,16 @@ class VersionedType {
       return;
     }
 
-
-    const path = relation.pathToRoot(v).reverse();
-    const type = relation.typeToRoot(v);
+    const path = relation.pathToRoot(v);
+    const type = relation.typeToRoot(v).reverse();
 
     let big = relation.NOTHING;
 
     for (let x of path) {
       const tmp = type.pop();
-      if (!this.nodes[x]) continue;
       if (tmp === undefined) break;
       if (tmp > big) big = tmp;
+      if (!this.nodes[x]) continue;
       switch (big) {
         case relation.NOTHING:
           if (!equalTypes(this.nodes[x],t)) {
@@ -136,12 +116,22 @@ function removeProp(obj, p) {
   return obj;
 }
 
+function setRelation(path) {
+  if (!relation) {
+    relation = require(path)
+    relation.NOTHING = 0;
+    relation.SUBTYPING = 10;
+    relation.EVERYTHING = 20;
+  }
+}
+
 export default function ({ types: t }) {
   let ids = {};
   let routes = {};
   return {
     visitor: {
-      CallExpression(path) {
+      CallExpression(path, state) {
+        setRelation(state.opts.relation);
         const call = path.node.callee;
         if (call.object &&
           call.object.name === 'niverso' &&
@@ -149,8 +139,19 @@ export default function ({ types: t }) {
           call.property.name !== 'start') {
           let version = path.node.arguments[0].value;
           let route = path.node.arguments[1].value;
-          let id = path.node.arguments[2].body.name;
-          let type = ids[id].get(version);
+          let type;
+          if (path.node.arguments[2].type === 'ArrowFunctionExpression') {
+            let id = path.node.arguments[2].body.name;
+            type = ids[id].get(version);
+          }
+          else if (path.node.arguments[2].type === 'MemberExpression') {
+            if (path.node.arguments[2].property.name === 'deprecate') {
+              type = {type: 'VoidTypeAnnotation'};
+            }
+          }
+          if (!(route in routes))
+            routes[route] = new VersionedType(route);
+          routes[route].add(version, type);
         }
       },
 
